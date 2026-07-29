@@ -63,6 +63,7 @@
 			<li><code>rename_contigs.py</code>: renaming contigs for consistencies before subsequent RGI profiling</li>
 			<li><code>prokka_rgi_reconcile.py</code>: identify "true positive" calls for annotated antibiotic resistant genes if reported by both Prokka and RGI for an annotated gene</li>
 			<li><code>gbk_region_extraction.py</code>: extraction of flanking region surrounding an annotated gene (e.g. <i>blaNDM-1</i>) with custom length (e.g. 50000bp)</li>
+			<li><code>ncbi_accessions_filter</code>: filtration of NCBI accession hits based on geographical data, hosts, number of contigs, and deduplication of bioprojects</li>
 			<li><code>subsample_by_st.py</code>" subsampling dataset with conserved sequence type and inclusion of other background dataset optionally</li>
 			<li><code>beast_prep_inputs_list.py</code> and <code>beast_make_xml.py</code>: preparation of inputs for BEAST time-caliberated phylogeny tree build</li>
 		</ul>
@@ -86,6 +87,7 @@
 		<li>NCBI accession numbers referenced in scripts/comments should be independently verified against NCBI before citing.</li>
 	</ul>
 
-<footer>
-		Internal lab pipelines &middot; run on <code>/storage/student9/</code> &middot; update this README when adding or restructuring a script.
-</footer>
+<h2>Publications</h2>
+
+<h2>Notes</h2>
+		Internal lab pipelines &middot; run on <code>/storage/student9/</code>
