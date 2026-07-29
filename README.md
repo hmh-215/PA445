@@ -7,8 +7,6 @@
 <h2 id="conda-envs">Conda environments</h2>
 	<table>
 		<tr><th>Environment</th><th>Key tools</th></tr>
-		<tr><td><code>preprocessing</code></td><td>Trimmomatic, FastQC, MultiQC</td></tr>
-		<tr><td><code>assembly</code></td><td>SPAdes, QUAST, seqkit</td></tr>
 		<tr><td><code>BPannotation</code></td><td>Bakta, Prokka, ABRicate</td></tr>
 		<tr><td><code>BPstructure</code></td><td>CheckM</td></tr>
 		<tr><td><code>BPtyping</code></td><td>mlst, pasty</td></tr>
@@ -33,10 +31,8 @@
 			<h3><code>PA_annotation.bash</code></h3>
 			<span class="tag">Bacterial &middot; single strain</span>
 		</div>
-		<div class="meta-row">
-			<span><strong>Input:</strong> PA445 hybrid assembly (filtered, &ge;500&nbsp;bp contigs)</span>
-			<span><strong>Focus gene:</strong> blaNDM-1</span>
-		</div>
+		<p><strong>Input:</strong> PA445 hybrid assembly (filtered, &ge;500&nbsp;bp contigs)</p>
+		<p><strong>Focus gene:</strong> blaNDM-1</p>
 		<p>Annotates the PA445 genome with Bakta, extracts both blaNDM-1 copies and their flanking region, and investigates the duplication mechanism: insertion-sequence boundaries (ISEScan, IS91 alignment), integrons, the ICE_B81 mobile element, recombination/palindrome sites, prophage content (PhiSpy), and a clinker synteny figure.</p>
 		<pre><code>./PA_annotation.bash</code></pre>
 </div>
@@ -46,10 +42,8 @@
 			<h3><code>PA_comparative.bash</code></h3>
 			<span class="tag">Bacterial &middot; comparative genomics</span>
 		</div>
-		<div class="meta-row">
-			<span><strong>Input:</strong> PA445 + NCBI-downloaded global <em>P. aeruginosa</em> genomes</span>
-			<span><strong>Stages:</strong> 8 phases</span>
-		</div>
+		<p><strong>Input:</strong> PA445 + NCBI-downloaded global <em>P. aeruginosa</em> genomes</p>
+		<p><strong>Stages:</strong> 8 phases</p>
 		<p>Downloads and filters global blaNDM-1 / background genomes, confirms true NDM-1 carriers (Prokka&nbsp;+&nbsp;RGI reconciliation), builds ST-aware subsampled and chromosomal-NDM-1-only datasets, and produces AMR heatmaps, core-gene phylogenies (Panaroo&nbsp;+&nbsp;IQ-TREE3), synteny plots, plasmid typing, and an optional BEAST-based time-calibrated phylogeny within PA445's lineage.</p>
 		<pre><code>./PA_comparative.bash</code></pre>
 </div>
@@ -64,7 +58,7 @@
 			<li><code>prokka_rgi_reconcile.py</code>: identify "true positive" calls for annotated antibiotic resistant genes if reported by both Prokka and RGI for an annotated gene</li>
 			<li><code>gbk_region_extraction.py</code>: extraction of flanking region surrounding an annotated gene (e.g. <i>blaNDM-1</i>) with custom length (e.g. 50000bp)</li>
 			<li><code>ncbi_accessions_filter</code>: filtration of NCBI accession hits based on geographical data, hosts, number of contigs, and deduplication of bioprojects</li>
-			<li><code>subsample_by_st.py</code>" subsampling dataset with conserved sequence type and inclusion of other background dataset optionally</li>
+			<li><code>subsample_by_st.py</code>: subsampling dataset with conserved sequence type and inclusion of other background dataset optionally</li>
 			<li><code>beast_prep_inputs_list.py</code> and <code>beast_make_xml.py</code>: preparation of inputs for BEAST time-caliberated phylogeny tree build</li>
 		</ul>
 </div>
@@ -75,7 +69,7 @@
 		</div>
 		<div class="meta-row">
 		<ul>
-			<li>phylogeny_O-type_AMR-heatmap folder: visualization of figure combining metadata + phylogeny tree + AMR profiling heatmap</li>
+			<li>phylogeny_O-type_AMR-heatmap scripts: visualization of figure combining metadata + phylogeny tree + AMR profiling heatmap</li>
 			<li><code>plot_time_tree.R</code>: visualization of time-caliberated phylogeny tree</li>
 		</ul>
 </div>
