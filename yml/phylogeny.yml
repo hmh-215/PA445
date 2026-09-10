@@ -1,0 +1,9 @@
+name: phylogeny
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - clinker-py=0.0.32
+  - mafft=7.525
+  - iqtree=3.1.2

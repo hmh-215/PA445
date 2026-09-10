@@ -1,0 +1,10 @@
+name: recombination
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - isescan=1.7.3
+  - integron_finder=2.0.6
+  - emboss=6.6.0.0
+  - phispy=5.0.10

@@ -1,0 +1,8 @@
+name: ani
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - fastani=1.34
+  - aniclustermap=2.0.1

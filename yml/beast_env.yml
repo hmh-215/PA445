@@ -1,0 +1,11 @@
+name: beast_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - beast2
+  - treeannotator
+  - treetime
+  - snp-sites
+  - gubbins

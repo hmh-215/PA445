@@ -1,0 +1,9 @@
+name: BPstructure
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - checkm-genome=1.2.5
+  - checkv=1.0.3

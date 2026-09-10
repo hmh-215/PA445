@@ -1,0 +1,7 @@
+name: pangenome
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - panaroo=1.6.0

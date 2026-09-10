@@ -22,30 +22,30 @@
 <h2 id="repo-structure">Pipelines</h2>
 	<table>
 		<tr><th>Scripts</th><th>Purpose</th></tr>
-		<tr><td><code>PA_annotation.bash</code></td><td>blaNDM-1 duplication-mechanism investigation</td></tr>
-		<tr><td><code>PA_comparative.bash</code></td><td>Comparative genomics vs. PA445, genetic distance and time-caliberated phylogeny</td></tr>
+		<tr><td><code>bash/PA_annotation.bash</code></td><td>blaNDM-1 duplication-mechanism investigation</td></tr>
+		<tr><td><code>bash/PA_comparative.bash</code></td><td>Comparative genomics vs. PA445, genetic distance and time-caliberated phylogeny</td></tr>
 	</table>
 
 <div class="card">
 		<div class="card-title">
-			<h3><code>PA_annotation.bash</code></h3>
+			<h3><code>bash/PA_annotation.bash</code></h3>
 			<span class="tag">Bacterial &middot; single strain</span>
 		</div>
 		<p><strong>Input:</strong> PA445 hybrid assembly (filtered, &ge;500&nbsp;bp contigs)</p>
 		<p><strong>Focus gene:</strong> blaNDM-1</p>
 		<p>Annotates the PA445 genome with Bakta, extracts both blaNDM-1 copies and their flanking region, and investigates the duplication mechanism: insertion-sequence boundaries (ISEScan, IS91 alignment), integrons, the ICE_B81 mobile element, recombination/palindrome sites, prophage content (PhiSpy), and a clinker synteny figure.</p>
-		<pre><code>./PA_annotation.bash</code></pre>
+		<pre><code>bash ./bash/PA_annotation.bash</code></pre>
 </div>
 
 <div class="card">
 		<div class="card-title">
-			<h3><code>PA_comparative.bash</code></h3>
+			<h3><code>bash/PA_comparative.bash</code></h3>
 			<span class="tag">Bacterial &middot; comparative genomics</span>
 		</div>
 		<p><strong>Input:</strong> PA445 + NCBI-downloaded global <em>P. aeruginosa</em> genomes</p>
 		<p><strong>Stages:</strong> 8 phases</p>
 		<p>Downloads and filters global blaNDM-1 / background genomes, confirms true NDM-1 carriers (Prokka&nbsp;+&nbsp;RGI reconciliation), builds ST-aware subsampled and chromosomal-NDM-1-only datasets, and produces AMR heatmaps, core-gene phylogenies (Panaroo&nbsp;+&nbsp;IQ-TREE3), synteny plots, plasmid typing, and an optional BEAST-based time-calibrated phylogeny within PA445's lineage.</p>
-		<pre><code>./PA_comparative.bash</code></pre>
+		<pre><code>bash ./bash/PA_comparative.bash</code></pre>
 </div>
 
 <div class="card">

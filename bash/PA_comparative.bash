@@ -20,7 +20,7 @@ SAMPLE_PATH="/storage/student9/projects/Paeruginosa"
 REF_PATH="/storage/student9/references"
 COMP_PATH="${SAMPLE_PATH}/comparative_genomics_Paeruginosa"
 REFERENCES_PA="${COMP_PATH}/references"
-TOOL_PATH="/storage/student9/tools"
+TOOL_PATH="${TOOL_PATH:-/storage/student9/tools}"
 
 MLST_PA="${COMP_PATH}/mlst"
 PASTY_PA="${COMP_PATH}/pasty"
@@ -113,8 +113,20 @@ subsample_by_st="${TOOL_PATH}/subsample_by_st.py"
 ncbi_accessions_filter="${TOOL_PATH}/ncbi_accessions_filter.py"
 rename_contigs="${TOOL_PATH}/rename_contigs.py"
 gene_location_filter="${TOOL_PATH}/gene_location_filter.py"
-prep_beast_inputs="${TOOL_PATH}/prep_beast_inputs.py"
-make_beast_xml="${TOOL_PATH}/make_beast_xml.py"
+if [ -f "${TOOL_PATH}/BEAST/beast_prep_inputs_list.py" ]; then
+	prep_beast_inputs="${TOOL_PATH}/BEAST/beast_prep_inputs_list.py"
+elif [ -f "${TOOL_PATH}/beast_prep_inputs_list.py" ]; then
+	prep_beast_inputs="${TOOL_PATH}/beast_prep_inputs_list.py"
+else
+	prep_beast_inputs="${TOOL_PATH}/prep_beast_inputs.py"
+fi
+if [ -f "${TOOL_PATH}/BEAST/beast_make_xml.py" ]; then
+	make_beast_xml="${TOOL_PATH}/BEAST/beast_make_xml.py"
+elif [ -f "${TOOL_PATH}/beast_make_xml.py" ]; then
+	make_beast_xml="${TOOL_PATH}/beast_make_xml.py"
+else
+	make_beast_xml="${TOOL_PATH}/make_beast_xml.py"
+fi
 
 # Global log
 LOG="${COMP_PATH}/PA_comparative.log"

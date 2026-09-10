@@ -1,0 +1,11 @@
+name: assembly
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - spades=4.0.0
+  - quast=5.2.0
+  - seqkit=2.13.0
+  - unicycler=0.5.1

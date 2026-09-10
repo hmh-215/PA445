@@ -1,0 +1,15 @@
+name: r_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base
+  - r-optparse
+  - r-ggplot2
+  - r-tidyverse
+  - r-rcolorbrewer
+  - r-ape
+  - r-ggnewscale
+  - bioconductor-ggtree
+  - bioconductor-treeio
