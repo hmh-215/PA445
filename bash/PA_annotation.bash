@@ -60,12 +60,27 @@ ICE_B81_ACCESSION="OQ806931"
 filtered_assembly="${SAMPLE_PATH}/445.hybrid_assembly_filter500bp.fasta"
 filtered_assembly_renamed="${SAMPLE_PATH}/445.hybrid_assembly_filter500bp.renamed.fasta"
 
-#Generate logs
+# Dual-log setup: main run log and dedicated failure/skip tracking log
 LOG="${ANNOTATION_PA445}/PA_annotation.pipeline.log"
+FAIL_LOG="${ANNOTATION_PA445}/PA_annotation.failed_skipped.log"
 exec > >(tee -a "${LOG}") 2>&1
+
+echo "======================================================" >> "${FAIL_LOG}"
+echo " Failure & Skip Log — Started: $(date)" >> "${FAIL_LOG}"
+echo "======================================================" >> "${FAIL_LOG}"
+
+log_failure() {
+    local phase="$1"
+    local sample="$2"
+    local status="$3" # e.g. "SKIPPED_EXISTS", "INPUT_MISSING", "EXECUTION_FAILED", "OUTPUT_MISSING"
+    local reason="$4"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [${phase}] [${sample}] [${status}] ${reason}" >> "${FAIL_LOG}"
+}
 
 echo "========================================================"
 echo " PA445 Annotation Pipeline - Started: $(date)"
+echo " Full log           : ${LOG}"
+echo " Failure & skip log : ${FAIL_LOG}"
 echo "========================================================"
 
 	#############################################
@@ -854,7 +869,18 @@ echo "  Synteny GBK inputs      : ${SYNTENY_PA445}/gbk_inputs/"
 echo "  Synteny plot            : ${SYNTENY_PA445}/blaNDM1.combined_region.synteny.html"
 echo "  PhiSpy results			: ${PHISPY_PA445}/PA445.full.prophages/"
 echo "  Inverted repeat GFF     : ${RECOMBINATION_PA445}/${gene_name}.combined_region.einverted.genome_coords.gff"
-echo "  Full log        : ${LOG}"
+echo "  Full execution log     : ${LOG}"
+
+fail_count=$(grep -c '\[FAILED\]\|\[EXECUTION_FAILED\]\|\[OUTPUT_MISSING' "${FAIL_LOG}" 2>/dev/null || echo 0)
+skip_count=$(grep -c '\[SKIPPED' "${FAIL_LOG}" 2>/dev/null || echo 0)
+
+if [ "${fail_count}" -gt 0 ]; then
+	echo -e "\e[31m  Failure/Issues log     : ${FAIL_LOG} (${fail_count} failures detected!) \e[0m"
+	echo -e "\e[31m  >>> Inspect ${FAIL_LOG} to see which steps/samples failed and why. \e[0m"
+else
+	echo -e "\e[32m  Failure/Issues log     : ${FAIL_LOG} (0 errors recorded) \e[0m"
+fi
+echo -e "\e[32m  Skipped checkpoints    : ${skip_count} records \e[0m"
 echo "========================================================"
 
 echo " Manual steps still required:"

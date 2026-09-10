@@ -128,13 +128,28 @@ else
 	make_beast_xml="${TOOL_PATH}/make_beast_xml.py"
 fi
 
-# Global log
+# Dual-log setup: main run log and dedicated failure/skip tracking log
 LOG="${COMP_PATH}/PA_comparative.log"
+FAIL_LOG="${COMP_PATH}/PA_comparative.failed_skipped.log"
 exec > >(tee -a "${LOG}") 2>&1
+
+echo "======================================================" >> "${FAIL_LOG}"
+echo " Failure & Skip Log — Started: $(date)" >> "${FAIL_LOG}"
+echo "======================================================" >> "${FAIL_LOG}"
+
+log_failure() {
+    local phase="$1"
+    local sample="$2"
+    local status="$3" # e.g. "SKIPPED_EXISTS", "INPUT_MISSING", "EXECUTION_FAILED", "OUTPUT_MISSING"
+    local reason="$4"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [${phase}] [${sample}] [${status}] ${reason}" >> "${FAIL_LOG}"
+}
 
 echo "======================================================"
 echo " P. aeruginosa comparative genomics - Started: $(date)"
 echo " Focal strain : PA445 (blaNDM-1, chromosomal)"
+echo " Full log     : ${LOG}"
+echo " Failure log  : ${FAIL_LOG}"
 echo "======================================================"
 
 	############################
@@ -411,26 +426,38 @@ done
 for fasta in "${REFERENCES_PA}/"*.fasta;
 do
 	strain=$(basename "${fasta}" .fasta)
+	expected_pasty="${PASTY_PA}/${strain}.pasty.tsv"
 
-	conda run -n BPtyping pasty \
-	--force \
-	--prefix "${strain}.pasty" \
-	--input "${fasta}" \
-	--outdir "${PASTY_PA}"
+	if [ -s "${expected_pasty}" ]; then
+		echo -e "\e[32m   [${strain}] Pasty already completed - skipping \e[0m"
+		log_failure "Phase1_Pasty" "${strain}" "SKIPPED_EXISTS" "Output ${expected_pasty} already exists"
+		continue
+	fi
+
+	if ! conda run -n BPtyping pasty \
+		--force \
+		--prefix "${strain}.pasty" \
+		--input "${fasta}" \
+		--outdir "${PASTY_PA}"; then
+		echo -e "\e[31m   [${strain}] ERROR: Pasty failed execution \e[0m"
+		log_failure "Phase1_Pasty" "${strain}" "EXECUTION_FAILED" "pasty exited non-zero"
+		continue
+	fi
 done
 
 	# Merge pasty outputs
-	head -n 1 "${PASTY_PA}/$(ls "${PASTY_PA}/"*.pasty.tsv | head -1 | xargs basename)" \
-		> "${PASTY_PA}/PA_serotypes.tsv"
-for fasta in "${REFERENCES_PA}/"*.fasta;
-do
-	strain=$(basename "${fasta}" .fasta)
-
-	if [ -f "${PASTY_PA}/${strain}.pasty.tsv" ]; then
-		tail -n +2 "${PASTY_PA}/${strain}.pasty.tsv" >> "${PASTY_PA}/PA_serotypes.tsv"
+	if ls "${PASTY_PA}/"*.pasty.tsv >/dev/null 2>&1; then
+		head -n 1 "${PASTY_PA}/$(ls "${PASTY_PA}/"*.pasty.tsv | head -1 | xargs basename)" \
+			> "${PASTY_PA}/PA_serotypes.tsv"
+		for fasta in "${REFERENCES_PA}/"*.fasta;
+		do
+			strain=$(basename "${fasta}" .fasta)
+			if [ -f "${PASTY_PA}/${strain}.pasty.tsv" ]; then
+				tail -n +2 "${PASTY_PA}/${strain}.pasty.tsv" >> "${PASTY_PA}/PA_serotypes.tsv"
+			fi
+		done
+		echo -e "\e[32m Pasty serotypes: ${PASTY_PA}/PA_serotypes.tsv \e[0m"
 	fi
-done
-	echo -e "\e[32m Pasty serotypes: ${PASTY_PA}/PA_serotypes.tsv \e[0m"
 
 	# -- RGI (full dataset) ------------------------------------------------
 
@@ -449,40 +476,54 @@ RGI_PA_MAP="${RGI_PA}/rgi_inputs/contig_name_map.tsv"
 for fasta in "${REFERENCES_PA}/"*.fasta;
 do
 	strain=$(basename "${fasta}" .fasta)
-
 	output="${RGI_PA}/rgi_inputs/${strain}.fasta"
-	# Contigs -> c00001, c00002, ... (no underscore; one sequence line each so the
-	# faidx 'inconsistent line length' failure - the real cause of RGI's
-	# "Requested rname ... does not exist" - cannot happen). --validate builds the
-	# .fai with htslib (what RGI uses) and fails loudly if the file is unindexable.
-	conda run -n rgi_env python3 "${rename_contigs}" \
-	"${fasta}" "${output}" \
-	--sample "${strain}" \
-	--map "${RGI_PA_MAP}" \
-	--append \
-	--prefix c \
-	--width 0 \
-	--validate
+
+	if [ -s "${output}" ]; then
+		log_failure "Phase1_RenameContigs" "${strain}" "SKIPPED_EXISTS" "Output ${output} already exists"
+		continue
+	fi
+
+	if ! conda run -n rgi_env python3 "${rename_contigs}" \
+		"${fasta}" "${output}" \
+		--sample "${strain}" \
+		--map "${RGI_PA_MAP}" \
+		--append \
+		--prefix c \
+		--width 0 \
+		--validate; then
+		log_failure "Phase1_RenameContigs" "${strain}" "EXECUTION_FAILED" "rename_contigs failed"
+	fi
 done
 
 for fasta in "${RGI_PA}/rgi_inputs/"*.fasta;
 do
 	strain=$(basename "${fasta}" .fasta)
+	rgi_out="${RGI_PA}/${strain}_rgi.txt"
+
+	if [ -s "${rgi_out}" ]; then
+		echo -e "\e[32m   [${strain}] RGI already completed - skipping \e[0m"
+		log_failure "Phase1_RGI" "${strain}" "SKIPPED_EXISTS" "Output ${rgi_out} already exists"
+		continue
+	fi
 
 	echo -e "\e[32m Running RGI on ${strain}... \e[0m"
-	conda run -n rgi_env rgi main \
-	--input_sequence "${fasta}" \
-	--output_file "${RGI_PA}/${strain}_rgi" \
-	--input_type contig \
-	--alignment_tool DIAMOND \
-	--num_threads "${threads}" \
-	--clean
+	if ! conda run -n rgi_env rgi main \
+		--input_sequence "${fasta}" \
+		--output_file "${RGI_PA}/${strain}_rgi" \
+		--input_type contig \
+		--alignment_tool DIAMOND \
+		--num_threads "${threads}" \
+		--clean; then
+		echo -e "\e[31m   [${strain}] ERROR: RGI failed execution \e[0m"
+		log_failure "Phase1_RGI" "${strain}" "EXECUTION_FAILED" "rgi main exited non-zero"
+		continue
+	fi
 done
 
 	echo -e "\e[32m Generating RGI heatmap for subsampled dataset... \e[0m"
 	conda run -n rgi_env rgi heatmap \
 	--input "${RGI_PA}/" \
-	--output "${RGI_PA}/PA445.AMR_heatmap_full"
+	--output "${RGI_PA}/PA445.AMR_heatmap_full" || true
 
 	echo -e "\e[32m RGI full-dataset complete: ${RGI_PA}/ \e[0m"
 
@@ -492,37 +533,54 @@ done
 	echo -e "\e[31m PROKKA: ANNOTATING ALL STRAINS       \e[0m"
 	echo -e "\e[31m ==================================== \e[0m"
 
-	conda run -n BPannotation prokka \
-	--force \
-	--cpus "${threads}" \
-	--genus Pseudomonas \
-	--species aeruginosa \
-	--prefix PA445.prokka \
-	--outdir "${PROKKA_PA}/PA445.prokka" \
-	"${PA445}"
+	if [ -s "${PROKKA_PA}/PA445.prokka/PA445.prokka.gff" ]; then
+		echo -e "\e[32m   [PA445] Prokka already completed - skipping \e[0m"
+		log_failure "Phase1_Prokka" "PA445" "SKIPPED_EXISTS" "GFF already exists"
+	else
+		if ! conda run -n BPannotation prokka \
+			--force \
+			--cpus "${threads}" \
+			--genus Pseudomonas \
+			--species aeruginosa \
+			--prefix PA445.prokka \
+			--outdir "${PROKKA_PA}/PA445.prokka" \
+			"${PA445}"; then
+			log_failure "Phase1_Prokka" "PA445" "EXECUTION_FAILED" "prokka exited non-zero"
+		fi
+	fi
 
-	cp "${PROKKA_PA}/PA445.prokka/PA445.prokka.gff" \
-	   "${PANAROO_PA}/gff_inputs/PA445.gff"
+	[ -f "${PROKKA_PA}/PA445.prokka/PA445.prokka.gff" ] && \
+		cp "${PROKKA_PA}/PA445.prokka/PA445.prokka.gff" "${PANAROO_PA}/gff_inputs/PA445.gff"
 
 for fasta in "${REFERENCES_PA}/"*.fasta;
 do
 	strain=$(basename "${fasta}" .fasta)
 	[ "${strain}" == "PA445" ] && continue
 
+	prokka_gff="${PROKKA_PA}/${strain}.prokka/${strain}.prokka.gff"
+	if [ -s "${prokka_gff}" ]; then
+		echo -e "\e[32m   [${strain}] Prokka already completed - skipping \e[0m"
+		log_failure "Phase1_Prokka" "${strain}" "SKIPPED_EXISTS" "Output ${prokka_gff} already exists"
+		[ -f "${prokka_gff}" ] && cp "${prokka_gff}" "${PANAROO_PA}/gff_inputs/${strain}.gff"
+		continue
+	fi
+
 	mkdir -p "${PROKKA_PA}/${strain}.prokka"
 	echo -e "\e[32m Annotating ${strain} with Prokka... \e[0m"
 
-	conda run -n BPannotation prokka \
-	--force \
-	--cpus "${threads}" \
-	--genus Pseudomonas \
-	--species aeruginosa \
-	--prefix "${strain}.prokka" \
-	--outdir "${PROKKA_PA}/${strain}.prokka" \
-	"${fasta}"
-
-	cp "${PROKKA_PA}/${strain}.prokka/${strain}.prokka.gff" \
-	   "${PANAROO_PA}/gff_inputs/${strain}.gff"
+	if ! conda run -n BPannotation prokka \
+		--force \
+		--cpus "${threads}" \
+		--genus Pseudomonas \
+		--species aeruginosa \
+		--prefix "${strain}.prokka" \
+		--outdir "${PROKKA_PA}/${strain}.prokka" \
+		"${fasta}"; then
+		echo -e "\e[31m   [${strain}] ERROR: Prokka failed \e[0m"
+		log_failure "Phase1_Prokka" "${strain}" "EXECUTION_FAILED" "prokka exited non-zero"
+		continue
+	fi
+	[ -f "${prokka_gff}" ] && cp "${prokka_gff}" "${PANAROO_PA}/gff_inputs/${strain}.gff"
 	echo -e "\e[32m   ${strain} annotation complete \e[0m"
 done
 
@@ -1364,6 +1422,20 @@ echo -e "\e[32m  Synteny plot       : ${CLINKER_PA}/blaNDM1.clinker.html \e[0m"
 echo -e "\e[32m  Platon             : ${PLATON_PA}/ \e[0m"
 echo -e "\e[32m  PlasmidFinder      : ${PLASMIDFINDER_PA}/ \e[0m"
 echo -e "\e[32m  MOB-suite          : ${MOBSUITE_PA}/ \e[0m"
+echo ""
+echo -e "\e[32m -- LOG FILES ------------------------------------------------------- \e[0m"
+echo -e "\e[32m  Full execution log     : ${LOG} \e[0m"
+
+fail_count=$(grep -c '\[FAILED\]\|\[EXECUTION_FAILED\]\|\[OUTPUT_MISSING' "${FAIL_LOG}" 2>/dev/null || echo 0)
+skip_count=$(grep -c '\[SKIPPED' "${FAIL_LOG}" 2>/dev/null || echo 0)
+
+if [ "${fail_count}" -gt 0 ]; then
+	echo -e "\e[31m  Failure/Issues log     : ${FAIL_LOG} (${fail_count} failures detected!) \e[0m"
+	echo -e "\e[31m  >>> Inspect ${FAIL_LOG} to see which steps/samples failed and why. \e[0m"
+else
+	echo -e "\e[32m  Failure/Issues log     : ${FAIL_LOG} (0 errors recorded) \e[0m"
+fi
+echo -e "\e[32m  Skipped checkpoints    : ${skip_count} records \e[0m"
 echo ""
 echo -e "\e[32m -- SUGGESTED NEXT STEPS -------------------------------------------- \e[0m"
 echo -e "\e[32m  1. MLST: identify PA445 sequence type vs global NDM-1 strains \e[0m"
