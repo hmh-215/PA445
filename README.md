@@ -19,6 +19,28 @@
 		<tr><td><code>plasmid</code></td><td>Platon, PlasmidFinder, MOB-suite</td></tr>
 	</table>
 
+<h2 id="cloning-and-execution">Cloning and Execution</h2>
+	<p>To clone the repository onto your compute environment and prepare the workflows for execution:</p>
+	<pre><code># 1. Clone the repository
+git clone https://github.com/hmh-215/PA445.git
+# Alternatively via SSH:
+# git clone git@github.com:hmh-215/PA445.git
+
+# 2. Navigate into the repository directory
+cd PA445
+
+# 3. Grant executable permissions to all bash, python, and R scripts
+chmod -R +x bash/
+chmod -R +x python/
+chmod -R +x Rscripts/
+
+# 4. Execute the desired workflow
+bash ./bash/PA_annotation.bash
+# or
+bash ./bash/PA_comparative.bash
+</code></pre>
+	<p><em>Note:</em> Verify that custom script paths (e.g., <code>TOOL_PATH</code>), reference files, and project paths declared in the <code>GLOBAL SETUP</code> block are adjusted to match your compute environment before execution.</p>
+
 <h2 id="repo-structure">Pipelines</h2>
 	<table>
 		<tr><th>Scripts</th><th>Purpose</th></tr>
